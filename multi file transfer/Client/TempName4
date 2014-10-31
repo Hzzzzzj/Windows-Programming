@@ -1,0 +1,42 @@
+       if(mkdir(newDirPath,0777))
+                     perror(newDirPath);
+                sleep(2);
+
+                char newFilebuf[256];
+                int sizeOfFile;
+                int doneCopying = 1;
+
+                //============ Loop to copy each file ============
+                while(1){
+                    bzero(newFilebuf,256);
+                    read(sockfd, newFilebuf, 255);
+                    //============ Sentinel Signal form Server ============
+                    if( strcmp(newFilebuf,"stopreading.stop") == 0 )
+                        break;
+                    char newFilePath[100];
+                    char* slash = "/";
+                    strcpy(newFilePath, newDirPath);
+                    strcat(newFilePath, slash);
+                    strcat(newFilePath, newFilebuf);
+                    //============ Open/Create new file ============
+                    int newfd = open(newFilePath,O_RDWR|O_CREAT|O_TRUNC,00666);
+                    read(sockfd, &sizeOfFile, sizeof(int));
+                    //============ If size < 0, copy bytes ============
+                    if(sizeOfFile > 0)
+                        sockToFile(sockfd, newfd);
+                    write(sockfd, &doneCopying, sizeof(int));
+                    close(newfd);
+                }
+                break;
+            }
+            default:{
+                //============ Arg might not exist not be reg/dir ============
+                cout << "Arguement: " << argVec[i] << " is not a regular file or directory. Cannot by copied." << endl;
+                break;
+            }
+        }
+    }
+    
+    cout << "Thread " << threadid << " finished copying." << endl;
+    pthread_exit(NULL);
+}
